@@ -1,0 +1,28 @@
+# ─── Secrets — NEVER commit ──────────────────────────────────────────────
+# The football-data.org key lives ONLY as a Cloudflare Worker secret.
+# These files can hold local secrets for development — keep them out of git.
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+*.secret
+secrets.*
+
+# ─── Cloudflare / Wrangler ───────────────────────────────────────────────
+.wrangler/
+**/.wrangler/
+# wrangler.toml is safe to commit (no secrets) and IS tracked.
+
+# ─── Python (client) ─────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ─── Node (worker tooling) ───────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+
+# ─── macOS ───────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
