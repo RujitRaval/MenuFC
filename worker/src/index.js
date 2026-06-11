@@ -19,6 +19,7 @@ import { flagFor } from "./flags.js";
 const UPSTREAM = "https://api.football-data.org/v4/competitions/WC/matches";
 const CACHE_KEY = "cache:v1";
 const LOCK_KEY = "lock:refresh";
+const FORCE_MIN_AGE_MS = 15000; // a ?fresh=1 request only refetches if cache is older than this (anti-abuse)
 
 // YYYY-MM-DD in US Eastern, DST-safe (en-CA renders ISO order).
 const ET_FMT = new Intl.DateTimeFormat("en-CA", {
@@ -40,7 +41,7 @@ export default {
     }
     if (url.pathname === "/scores") {
       try {
-        return await handleScores(env);
+        return await handleScores(env, url.searchParams.has("fresh"));
       } catch (err) {
         // Last-resort guard: never 500 the menu bar.
         return scoresResponse(emptyPayload(etDateString(new Date())), "error:" + (err && err.message));
@@ -50,12 +51,18 @@ export default {
   },
 };
 
-async function handleScores(env) {
+async function handleScores(env, forced) {
   const now = Date.now();
   const etDate = etDateString(new Date(now));
   const cache = await readCache(env);
 
-  if (!isStale(cache, now, etDate, env)) {
+  // Manual Refresh (?fresh=1) punches through the idle cache to upstream, but only if the
+  // cache is older than FORCE_MIN_AGE_MS — so a burst of forced refreshes still hits upstream
+  // at most ~once per 15s (and the herd lock below dedupes concurrent ones).
+  const age = cache && cache.fetchedAt ? now - cache.fetchedAt : Infinity;
+  const forceRefetch = forced && age >= FORCE_MIN_AGE_MS;
+
+  if (!forceRefetch && !isStale(cache, now, etDate, env)) {
     return scoresResponse(cache.payload, "fresh");
   }
 
