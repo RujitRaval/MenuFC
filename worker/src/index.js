@@ -16,7 +16,10 @@
 
 import { flagFor } from "./flags.js";
 
-const UPSTREAM = "https://api.football-data.org/v4/competitions/WC/matches";
+// Use the top-level /matches endpoint (competition-filtered). It returns FRESH, correct
+// scores, whereas /competitions/WC/matches serves stale/null scores on the free tier.
+const UPSTREAM = "https://api.football-data.org/v4/matches";
+const WC_COMPETITION_ID = 2000; // FIFA World Cup (code "WC")
 const CACHE_KEY = "cache:v1";
 const LOCK_KEY = "lock:refresh";
 const FORCE_MIN_AGE_MS = 15000; // a ?fresh=1 request only refetches if cache is older than this (anti-abuse)
@@ -109,10 +112,12 @@ function inLiveWindow(matches, now, env) {
 
 // ── upstream fetch + shaping ───────────────────────────────────────────────
 async function fetchAndShape(env, now, etDate) {
-  // Fetch a 2-day UTC window (the ET day spans two UTC dates), then filter to the ET day.
+  // The ET day spans two UTC dates; this endpoint's dateTo window runs narrow, so fetch a
+  // 3-day UTC window and filter to the ET day below.
   const from = etDate;
-  const to = nextDate(etDate);
-  const res = await fetch(`${UPSTREAM}?dateFrom=${from}&dateTo=${to}`, {
+  const to = addDays(etDate, 2);
+  const url = `${UPSTREAM}?competitions=${WC_COMPETITION_ID}&dateFrom=${from}&dateTo=${to}`;
+  const res = await fetch(url, {
     headers: { "X-Auth-Token": env.FOOTBALL_DATA_KEY, Accept: "application/json" },
   });
   if (!res.ok) throw new Error("upstream_" + res.status);
@@ -187,10 +192,10 @@ async function releaseLock(env) {
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function etDateString(d) { return ET_FMT.format(d); }
-function nextDate(dateStr) {
+function addDays(dateStr, n) {
   const [y, m, d] = dateStr.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() + 1);
+  dt.setUTCDate(dt.getUTCDate() + n);
   return dt.toISOString().slice(0, 10);
 }
 function emptyPayload(etDate, now) {
