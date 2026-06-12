@@ -1,0 +1,37 @@
+name: MenuFC
+options:
+  bundleIdPrefix: com.rujitraval
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Swift 5 language mode — avoids Swift 6 strict-concurrency churn for v1.
+    SWIFT_VERSION: "5.0"
+    PRODUCT_BUNDLE_IDENTIFIER: com.rujitraval.menufc
+    # Use our hand-written Info.plist (full control over LSUIElement, category, etc.).
+    GENERATE_INFOPLIST_FILE: NO
+    INFOPLIST_FILE: MenuFC/Resources/Info.plist
+    CODE_SIGN_ENTITLEMENTS: MenuFC/Resources/MenuFC.entitlements
+    # App Store readiness: Automatic signing + Hardened Runtime.
+    # TODO: set DEVELOPMENT_TEAM to your Apple Developer Team ID before archiving.
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    COMBINE_HIDPI_IMAGES: YES
+
+targets:
+  MenuFC:
+    type: application
+    platform: macOS
+    sources:
+      - path: MenuFC/Sources
+    resources:
+      - path: MenuFC/Resources/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_NAME: MenuFC

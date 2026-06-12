@@ -24,8 +24,13 @@ A free macOS menu-bar app showing **live FIFA World Cup 2026 scores**, with an o
 | Path        | What it is                                                        | Phase |
 |-------------|-------------------------------------------------------------------|-------|
 | `worker/`   | Cloudflare Worker (`menufc-api`) + KV cache. Key lives in a secret. | 2     |
-| `client/`   | SwiftBar plugin `menufc.30s.py` (Python 3, stdlib only).          | 3     |
+| `app/`      | **Native macOS menu-bar app (Swift/AppKit)** — the shippable client. | 5     |
+| `client/`   | SwiftBar plugin `menufc.30s.py` — superseded by `app/`, kept as reference. | 3     |
 | `docs/`     | "Setting up MenuFC" guide + one-page runbook.                     | 4     |
+
+> **The native app in [`app/`](app/) supersedes the SwiftBar plugin.** Same data and behavior,
+> built to ship on the Mac App Store. See [`app/README.md`](app/README.md) for build/run and the
+> Python→Swift parity checklist. The `worker/` backend is unchanged.
 
 ## Security invariants (do not break)
 

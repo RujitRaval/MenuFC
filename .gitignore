@@ -26,6 +26,14 @@ npm-debug.log*
 # ─── Build / release artifacts ───────────────────────────────────────────
 dist/
 
+# ─── Xcode (native app) ──────────────────────────────────────────────────
+# MenuFC.xcodeproj is generated from project.yml by `xcodegen generate`.
+app/build/
+app/MenuFC.xcodeproj/
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
 # ─── macOS ───────────────────────────────────────────────────────────────
 .DS_Store
 .AppleDouble
