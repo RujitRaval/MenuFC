@@ -1,0 +1,17 @@
+name = "menufc-api"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+# KV namespace for the central scores cache + thundering-herd lock.
+# The `id` is filled in after you run `wrangler kv namespace create "MENUFC_CACHE"` (see deploy steps).
+[[kv_namespaces]]
+binding = "MENUFC_CACHE"
+id = "5cf6208b19034cc5892196a3492e00a3"
+
+# Tunable, non-secret config. The football-data.org key is NOT here — it is a secret
+# (wrangler secret put FOOTBALL_DATA_KEY) and, for local dev, lives in worker/.dev.vars (gitignored).
+[vars]
+LIVE_TTL_SECONDS   = 60     # cache freshness while any match is live (also caps upstream to ~1 req/min)
+IDLE_TTL_SECONDS   = 3600   # cache freshness off-hours (serve last-known, refresh hourly to catch rollover)
+PREKICK_MINUTES    = 5      # start the live window this many minutes before kickoff
+POSTMATCH_MINUTES  = 150    # keep the live window open this many minutes after kickoff (covers ET/stoppage)

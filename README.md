@@ -33,6 +33,13 @@ A free macOS menu-bar app showing **live FIFA World Cup 2026 scores**, with an o
   never in this repo. See [`.gitignore`](.gitignore).
 - The client ships with the public Worker URL baked in and nothing else sensitive.
 
+## Install (users)
+
+See **[docs/Setting-up-MenuFC.md](docs/Setting-up-MenuFC.md)** — no key or account needed.
+Operators: see the **[runbook](docs/RUNBOOK.md)**.
+
+Live Worker: `https://menufc-api.rujit.workers.dev` · Coffee: `https://buymeacoffee.com/rujitraval`
+
 ## Status
 
-🚧 Under construction — built in phases. Currently: **Phase 0 (prereqs) / repo setup**.
+✅ Worker deployed, client working. Built in phases (0 → 4). License: [MIT](LICENSE).

@@ -23,6 +23,9 @@ venv/
 node_modules/
 npm-debug.log*
 
+# ─── Build / release artifacts ───────────────────────────────────────────
+dist/
+
 # ─── macOS ───────────────────────────────────────────────────────────────
 .DS_Store
 .AppleDouble
