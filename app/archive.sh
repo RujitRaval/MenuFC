@@ -26,6 +26,7 @@ xcodegen generate
 echo "▶︎ Archiving (Release, Automatic signing, team $TEAM_ID)…"
 xcodebuild -project MenuFC.xcodeproj -scheme MenuFC -configuration Release \
   -archivePath "$ARCHIVE" \
+  -allowProvisioningUpdates \
   DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
   archive
 
@@ -35,7 +36,8 @@ sed "s/__TEAM_ID__/$TEAM_ID/" ExportOptions.plist > "$TMP_OPTS"
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE" \
   -exportPath "$EXPORT_DIR" \
-  -exportOptionsPlist "$TMP_OPTS"
+  -exportOptionsPlist "$TMP_OPTS" \
+  -allowProvisioningUpdates
 
 echo
 echo "✅ Done. Export is in $EXPORT_DIR"

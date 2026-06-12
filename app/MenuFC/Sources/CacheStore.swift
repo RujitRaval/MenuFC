@@ -29,3 +29,28 @@ struct CacheStore {
         try? data.write(to: fileURL, options: .atomic) // failures must never break the app
     }
 }
+
+// Persistent history of finished matches, so the dropdown's RECENT section survives the ET
+// day rollover (yesterday's results stay until newer ones replace them).
+struct RecentStore {
+    private let fileURL: URL
+
+    init() {
+        let base = (try? FileManager.default.url(
+            for: .applicationSupportDirectory, in: .userDomainMask,
+            appropriateFor: nil, create: true)) ?? FileManager.default.temporaryDirectory
+        let dir = base.appendingPathComponent("MenuFC", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        fileURL = dir.appendingPathComponent("recent.json")
+    }
+
+    func load() -> [Match] {
+        guard let data = try? Data(contentsOf: fileURL) else { return [] }
+        return (try? JSONDecoder().decode([Match].self, from: data)) ?? []
+    }
+
+    func save(_ matches: [Match]) {
+        guard let data = try? JSONEncoder().encode(matches) else { return }
+        try? data.write(to: fileURL, options: .atomic)
+    }
+}
