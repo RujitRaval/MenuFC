@@ -1,7 +1,14 @@
 import Foundation
 
-// US Eastern day boundary + time formatting, matching client/menufc.30s.py.
+// Time helpers.
+//
+// Display only — the daily slate still comes from the Worker (ET day); localizing the day
+// boundary is a separate, larger change. So:
+//   • Clock times shown to the user (kickoff, "Updated …") use the DEVICE's local timezone.
+//   • `eastern` / `etTodayString` stay US Eastern — they are used ONLY to detect the Worker's
+//     ET-day rollover (Poller), never for display.
 enum TimeUtil {
+    /// US Eastern — used ONLY for Worker ET-day rollover detection, not for display.
     static let eastern: TimeZone =
         TimeZone(identifier: "America/New_York") ?? TimeZone(secondsFromGMT: -4 * 3600)!
 
@@ -16,7 +23,7 @@ enum TimeUtil {
         return f2.date(from: s)
     }
 
-    /// "YYYY-MM-DD" for the given instant in US Eastern (mirror of et_today()).
+    /// "YYYY-MM-DD" in US Eastern — matches the Worker's slate day for rollover detection.
     static func etTodayString(_ now: Date = Date()) -> String {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = eastern
@@ -24,22 +31,35 @@ enum TimeUtil {
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.timeZone = eastern
-        f.locale = Locale(identifier: "en_US")
-        f.dateFormat = "h:mm a" // e.g. "3:00 PM" (no leading zero), matching Python
+    // Display formatter — DEVICE local timezone + device locale (so 12h/24h follows the user).
+    // Reconfigured per call from TimeZone.current/Locale.current so a runtime timezone change
+    // is picked up on the next render. Display only — see the file note above.
+    private static let sharedFormatter = DateFormatter()
+    private static func localFormatter() -> DateFormatter {
+        let f = sharedFormatter
+        f.timeZone = .current
+        f.locale = .current
+        f.setLocalizedDateFormatFromTemplate("jmm") // hour:minute in the locale's 12h/24h style
         return f
-    }()
-
-    /// Kickoff time in ET from a UTC ISO string (mirror of fmt_time_et).
-    static func timeETString(_ utcISO: String?) -> String {
-        guard let d = parseUTC(utcISO) else { return "TBD" }
-        return timeFormatter.string(from: d)
     }
 
-    /// "h:mm a" in ET for an absolute Date (footer "Updated …").
-    static func clockETString(_ date: Date) -> String {
-        timeFormatter.string(from: date)
+    /// Kickoff time from a UTC ISO string, in the device's local timezone.
+    static func timeString(_ utcISO: String?) -> String {
+        guard let d = parseUTC(utcISO) else { return "TBD" }
+        return localFormatter().string(from: d)
+    }
+
+    /// Clock time for an absolute Date (footer "Updated …"), device-local.
+    static func clockString(_ date: Date) -> String {
+        localFormatter().string(from: date)
+    }
+
+    /// Clean short zone name for the footer (e.g. "PDT", "CET", "JST"). Returns nil for
+    /// offset-style abbreviations like "GMT+5:30" that don't render cleanly.
+    static func localZoneShortName() -> String? {
+        guard let abbr = TimeZone.current.abbreviation(), abbr.allSatisfy({ $0.isLetter }) else {
+            return nil
+        }
+        return abbr
     }
 }

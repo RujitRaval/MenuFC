@@ -47,7 +47,7 @@ enum Presentation {
             return "\(hf) \(h)–\(a) \(af) \(st)"
         }
         if st == "SCHED" {
-            return "\(hf) vs \(af) \(TimeUtil.timeETString(m.utcDate))"
+            return "\(hf) vs \(af) \(TimeUtil.timeString(m.utcDate))"
         }
         return "\(hf) vs \(af) \(st)"
     }
@@ -84,7 +84,7 @@ enum Presentation {
         }
         let suffix: String
         if st == "SCHED" {
-            suffix = TimeUtil.timeETString(m.utcDate) + " ET"
+            suffix = TimeUtil.timeString(m.utcDate)
         } else if finalStates.contains(st) && !m.hasScore {
             suffix = "\(st) · score N/A"
         } else {
