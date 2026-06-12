@@ -88,13 +88,20 @@ struct DropdownView: View {
 
     @ViewBuilder private var updatedLine: some View {
         if let f = store.fetchedAt {
-            Text("Updated \(TimeUtil.clockETString(f)) ET\(store.offline ? " · offline (last known)" : "")")
-                .font(.caption2).foregroundStyle(.secondary)
+            Text(updatedText(f)).font(.caption2).foregroundStyle(.secondary)
         } else if store.offline {
             Text("Offline — no data yet").font(.caption2).foregroundStyle(.secondary)
         } else {
             Text("Updating…").font(.caption2).foregroundStyle(.secondary)
         }
+    }
+
+    // Footer text: local clock time + clean local zone abbrev (e.g. "Updated 2:14 PM PT").
+    // Display only — the slate day still comes from the Worker (ET).
+    private func updatedText(_ f: Date) -> String {
+        let zone = TimeUtil.localZoneShortName().map { " \($0)" } ?? ""
+        let offline = store.offline ? " · offline (last known)" : ""
+        return "Updated \(TimeUtil.clockString(f))\(zone)\(offline)"
     }
 
     private func prettyDate(_ ymd: String) -> String {
@@ -180,7 +187,7 @@ struct MatchRowView: View {
 
     private var badgeText: String {
         let st = match.stateOrSched
-        if st == "SCHED" { return TimeUtil.timeETString(match.utcDate) }
+        if st == "SCHED" { return TimeUtil.timeString(match.utcDate) }
         if Presentation.finalStates.contains(st) && !match.hasScore { return "\(st) · N/A" }
         return st
     }
