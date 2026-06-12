@@ -1,5 +1,9 @@
 import SwiftUI
 
+// Neutral, easily-changeable competition label (avoids protected sports trademarks).
+// Change this single string to re-label the app (e.g. "Live Football", "Football Today").
+let competitionTitle = "Today's Matches"
+
 // The popover content: today's matches + footer. Hosted in our own NSPopover by
 // StatusItemController (no MenuBarExtra, nothing injected).
 struct DropdownView: View {
@@ -22,7 +26,7 @@ struct DropdownView: View {
 
     private var header: some View {
         HStack {
-            Text("FIFA World Cup").font(.headline)
+            Text(competitionTitle).font(.headline)
             Spacer()
             if let d = store.payload?.date {
                 Text(prettyDate(d)).font(.caption).foregroundStyle(.secondary)
@@ -35,7 +39,7 @@ struct DropdownView: View {
         if store.matches.isEmpty {
             HStack {
                 Spacer()
-                Text("⚽ No World Cup matches today")
+                Text("⚽ No matches today")
                     .font(.callout).foregroundStyle(.secondary)
                 Spacer()
             }

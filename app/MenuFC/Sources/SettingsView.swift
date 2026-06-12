@@ -31,7 +31,7 @@ struct SettingsView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Live FIFA World Cup 2026 scores in your menu bar.")
+                Text("Live football scores in your menu bar.")
                     .font(.callout)
                 Button("Data provided by football-data.org") {
                     if let u = URL(string: "https://www.football-data.org") { openURL(u) }
