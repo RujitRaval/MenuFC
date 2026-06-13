@@ -27,11 +27,11 @@ enum Presentation {
         if matches.isEmpty { return nil }
         if let live = matches.first(where: { $0.isLiveState }) { return live }
         let upcoming = matches
-            .filter { $0.state == "SCHED" }
+            .filter { $0.displayState == "SCHED" }
             .sorted { ($0.utcDate ?? "") < ($1.utcDate ?? "") }
         if let next = upcoming.first { return next }
         let finished = matches
-            .filter { finalStates.contains($0.state ?? "") }
+            .filter { finalStates.contains($0.displayState) }
             .sorted { ($0.utcDate ?? "") < ($1.utcDate ?? "") }
         return finished.last
     }
@@ -41,7 +41,7 @@ enum Presentation {
         guard let m = m else { return "⚽ No WC matches today" }
         let hf = m.home?.flag ?? "⚽"
         let af = m.away?.flag ?? "⚽"
-        let st = m.state ?? ""
+        let st = m.displayState
         if (st == "LIVE" || st == "HT" || st == "FT"), m.hasScore,
            let h = m.score?.home, let a = m.score?.away {
             return "\(hf) \(h)–\(a) \(af) \(st)"
@@ -59,7 +59,7 @@ enum Presentation {
         if m == nil {
             color = hexColor(0x8e8e93) // "no matches" → gray, like the Python default
         } else {
-            color = stateColor(m?.state) ?? NSColor.labelColor
+            color = stateColor(m?.displayState) ?? NSColor.labelColor
         }
         let base = NSFont.menuBarFont(ofSize: 0)
         let font: NSFont = (m?.isLiveState == true)
@@ -75,7 +75,7 @@ enum Presentation {
         let af = m.away?.flag ?? "⚽"
         let ht = m.home?.tla ?? "TBD"
         let at = m.away?.tla ?? "TBD"
-        let st = m.stateOrSched
+        let st = m.displayState
         let core: String
         if m.hasScore, let h = m.score?.home, let a = m.score?.away {
             core = "\(hf) \(ht) \(h)–\(a) \(at) \(af)"

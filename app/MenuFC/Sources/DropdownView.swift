@@ -1,5 +1,9 @@
 import SwiftUI
 
+// Neutral, easily-changeable competition label (avoids protected sports trademarks).
+// Change this single string to re-label the app (e.g. "Live Football", "Football Today").
+let competitionTitle = "Today's Matches"
+
 // The popover content: today's matches + footer. Hosted in our own NSPopover by
 // StatusItemController (no MenuBarExtra, nothing injected).
 struct DropdownView: View {
@@ -22,7 +26,7 @@ struct DropdownView: View {
 
     private var header: some View {
         HStack {
-            Text("FIFA World Cup").font(.headline)
+            Text(competitionTitle).font(.headline)
             Spacer()
             if let d = store.payload?.date {
                 Text(prettyDate(d)).font(.caption).foregroundStyle(.secondary)
@@ -35,7 +39,7 @@ struct DropdownView: View {
         if store.matches.isEmpty {
             HStack {
                 Spacer()
-                Text("⚽ No World Cup matches today")
+                Text("⚽ No matches today")
                     .font(.callout).foregroundStyle(.secondary)
                 Spacer()
             }
@@ -181,19 +185,19 @@ struct MatchRowView: View {
     }
 
     private var centerColor: Color {
-        if let c = Presentation.stateColor(match.state) { return Color(nsColor: c) }
+        if let c = Presentation.stateColor(match.displayState) { return Color(nsColor: c) }
         return .primary
     }
 
     private var badgeText: String {
-        let st = match.stateOrSched
+        let st = match.displayState
         if st == "SCHED" { return TimeUtil.timeString(match.utcDate) }
         if Presentation.finalStates.contains(st) && !match.hasScore { return "\(st) · N/A" }
         return st
     }
 
     private var badgeColor: Color {
-        let st = match.stateOrSched
+        let st = match.displayState
         if st == "SCHED" { return .secondary }
         if let c = Presentation.stateColor(st) { return Color(nsColor: c) }
         return .secondary
