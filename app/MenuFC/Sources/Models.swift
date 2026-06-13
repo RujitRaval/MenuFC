@@ -37,5 +37,14 @@ extension Match {
     /// Both score sides present (mirror of Python has_score).
     var hasScore: Bool { score?.home != nil && score?.away != nil }
     var stateOrSched: String { state ?? "SCHED" }
-    var isLiveState: Bool { state == "LIVE" || state == "HT" }
+
+    /// State for display. Safe guard for football-data's free-tier kickoff lag: a match the
+    /// feed still calls "scheduled" but that already has a score must have kicked off, so we
+    /// show it as LIVE. (A score can't exist before kickoff.) Display-only.
+    var displayState: String {
+        let raw = state ?? "SCHED"
+        return (raw == "SCHED" && hasScore) ? "LIVE" : raw
+    }
+
+    var isLiveState: Bool { displayState == "LIVE" || displayState == "HT" }
 }

@@ -185,19 +185,19 @@ struct MatchRowView: View {
     }
 
     private var centerColor: Color {
-        if let c = Presentation.stateColor(match.state) { return Color(nsColor: c) }
+        if let c = Presentation.stateColor(match.displayState) { return Color(nsColor: c) }
         return .primary
     }
 
     private var badgeText: String {
-        let st = match.stateOrSched
+        let st = match.displayState
         if st == "SCHED" { return TimeUtil.timeString(match.utcDate) }
         if Presentation.finalStates.contains(st) && !match.hasScore { return "\(st) · N/A" }
         return st
     }
 
     private var badgeColor: Color {
-        let st = match.stateOrSched
+        let st = match.displayState
         if st == "SCHED" { return .secondary }
         if let c = Presentation.stateColor(st) { return Color(nsColor: c) }
         return .secondary

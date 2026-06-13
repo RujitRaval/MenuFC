@@ -34,7 +34,7 @@ final class ScoresStore: ObservableObject {
 
     // Dropdown sections.
     var liveMatches: [Match] { matches.filter { $0.isLiveState } }
-    var upcomingMatches: [Match] { matches.filter { $0.state == "SCHED" } }
+    var upcomingMatches: [Match] { matches.filter { $0.displayState == "SCHED" } }
     /// Last 3 finished matches (across days), most recent first.
     var recentMatches: [Match] {
         Array(recentHistory.prefix(3))
