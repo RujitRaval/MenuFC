@@ -48,3 +48,6 @@ DerivedData/
 
 # Local agent/editor settings
 .claude/
+
+# Local-only notes / internal docs — kept on disk, never in the public repo
+notes/
