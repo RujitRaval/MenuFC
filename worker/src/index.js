@@ -43,12 +43,17 @@ export default {
       return json({ ok: true, service: "menufc-api" });
     }
     if (url.pathname === "/scores") {
+      // Best-effort, privacy-preserving usage count — runs after responding, never blocks/breaks it.
+      ctx.waitUntil(recordHit(request, env).catch(() => {}));
       try {
         return await handleScores(env, url.searchParams.has("fresh"));
       } catch (err) {
         // Last-resort guard: never 500 the menu bar.
         return scoresResponse(emptyPayload(etDateString(new Date())), "error:" + (err && err.message));
       }
+    }
+    if (url.pathname === "/stats") {
+      return await handleStats(env, url.searchParams.get("key"));
     }
     return json({ error: "not_found" }, 404);
   },
@@ -188,6 +193,41 @@ async function acquireLock(env) {
 }
 async function releaseLock(env) {
   try { await env.MENUFC_CACHE.delete(LOCK_KEY); } catch {}
+}
+
+// ── usage analytics (privacy-preserving, server-side, no app changes) ────────
+// Counts distinct daily visitors WITHOUT storing personal data. We never store an IP — only
+// a per-day pseudonymous token = SHA-256(ip + day + secret salt), which cannot be reversed to
+// an IP and cannot be linked across days, plus a daily integer count. Runs in ctx.waitUntil,
+// so it never affects /scores latency or reliability. Set two secrets:
+//   wrangler secret put STATS_SALT   (any long random string — keeps tokens unguessable)
+//   wrangler secret put STATS_KEY    (the password for reading /stats)
+async function recordHit(request, env) {
+  const ip = request.headers.get("CF-Connecting-IP") || "";
+  if (!ip) return;
+  const day = etDateString(new Date());
+  const token = await sha256hex(ip + "|" + day + "|" + (env.STATS_SALT || "menufc"));
+  const seenKey = `u:${day}:${token}`;
+  if (await env.MENUFC_CACHE.get(seenKey)) return;                       // already counted today
+  await env.MENUFC_CACHE.put(seenKey, "1", { expirationTtl: 172800 });   // 2-day TTL, self-cleaning
+  const cntKey = `dau:${day}`;
+  const cur = parseInt((await env.MENUFC_CACHE.get(cntKey)) || "0", 10);
+  await env.MENUFC_CACHE.put(cntKey, String(cur + 1), { expirationTtl: 60 * 60 * 24 * 120 });
+}
+
+// GET /stats?key=YOUR_STATS_KEY  ->  { dailyActiveUsers: { "2026-06-12": 1432, ... } }
+async function handleStats(env, key) {
+  if (!env.STATS_KEY || key !== env.STATS_KEY) return json({ error: "forbidden" }, 403);
+  const list = await env.MENUFC_CACHE.list({ prefix: "dau:" });
+  const days = {};
+  for (const k of list.keys) days[k.name.slice(4)] = Number(await env.MENUFC_CACHE.get(k.name));
+  const sorted = Object.fromEntries(Object.entries(days).sort((a, b) => b[0].localeCompare(a[0])));
+  return json({ dailyActiveUsers: sorted });
+}
+
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────

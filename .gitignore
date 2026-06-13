@@ -37,3 +37,14 @@ DerivedData/
 # ─── macOS ───────────────────────────────────────────────────────────────
 .DS_Store
 .AppleDouble
+
+# ─── Internal scaffolding (NOT part of the product) ──────────────────────
+# Claude Code prompts + private launch checklist — keep local, out of the public repo.
+/BUILD_PROMPT.md
+/DIRECT_DIST_PROMPT.md
+/LOCALTIME_PROMPT.md
+/TRADEMARK_PROMPT.md
+/START_HERE.md
+
+# Local agent/editor settings
+.claude/
