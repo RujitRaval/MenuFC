@@ -24,6 +24,9 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.sports</string>
+	<!-- Only standard HTTPS/TLS (provided by macOS) — exempt from export-encryption documentation. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<!-- Agent app: menu-bar only, no Dock icon, no main window. -->
