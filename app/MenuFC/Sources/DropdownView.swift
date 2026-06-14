@@ -84,6 +84,13 @@ struct DropdownView: View {
             MenuRowButton(title: "Data provided by football-data.org", systemImage: "link") {
                 if let u = URL(string: "https://www.football-data.org") { openURL(u) }
             }
+            #if DIRECT_BUILD
+            // Shown ONLY in the directly-distributed (non-App-Store) build. The App Store
+            // build never compiles this, so Apple's external-payment rules don't apply.
+            MenuRowButton(title: "Buy me a coffee ☕", systemImage: "cup.and.saucer") {
+                if let u = URL(string: "https://buymeacoffee.com/rujitraval") { openURL(u) }
+            }
+            #endif
             Divider().padding(.vertical, 2)
             MenuRowButton(title: "Settings…", systemImage: "gearshape", action: onSettings)
             MenuRowButton(title: "Quit MenuFC", systemImage: "power", action: onQuit)
