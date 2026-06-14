@@ -210,19 +210,30 @@ async function recordHit(request, env) {
   const seenKey = `u:${day}:${token}`;
   if (await env.MENUFC_CACHE.get(seenKey)) return;                       // already counted today
   await env.MENUFC_CACHE.put(seenKey, "1", { expirationTtl: 172800 });   // 2-day TTL, self-cleaning
-  const cntKey = `dau:${day}`;
-  const cur = parseInt((await env.MENUFC_CACHE.get(cntKey)) || "0", 10);
-  await env.MENUFC_CACHE.put(cntKey, String(cur + 1), { expirationTtl: 60 * 60 * 24 * 120 });
+  // Channel split: the .dmg build sends ?ch=direct; everything else counts as App Store.
+  const ch = new URL(request.url).searchParams.get("ch") === "direct" ? "direct" : "appstore";
+  for (const key of [`dau:${day}`, `dau:${day}:${ch}`]) {
+    const cur = parseInt((await env.MENUFC_CACHE.get(key)) || "0", 10);
+    await env.MENUFC_CACHE.put(key, String(cur + 1), { expirationTtl: 60 * 60 * 24 * 120 });
+  }
 }
 
-// GET /stats?key=YOUR_STATS_KEY  ->  { dailyActiveUsers: { "2026-06-12": 1432, ... } }
+// GET /stats?key=YOUR_STATS_KEY
+//   -> { dailyActiveUsers: {date:count}, byChannel: { appstore:{date:count}, direct:{date:count} } }
 async function handleStats(env, key) {
   if (!env.STATS_KEY || key !== env.STATS_KEY) return json({ error: "forbidden" }, 403);
   const list = await env.MENUFC_CACHE.list({ prefix: "dau:" });
-  const days = {};
-  for (const k of list.keys) days[k.name.slice(4)] = Number(await env.MENUFC_CACHE.get(k.name));
-  const sorted = Object.fromEntries(Object.entries(days).sort((a, b) => b[0].localeCompare(a[0])));
-  return json({ dailyActiveUsers: sorted });
+  const total = {}, appstore = {}, direct = {};
+  for (const k of list.keys) {
+    const parts = k.name.split(":");           // dau:DATE  or  dau:DATE:CHANNEL
+    const day = parts[1];
+    const val = Number(await env.MENUFC_CACHE.get(k.name));
+    if (parts.length === 2) total[day] = val;
+    else if (parts[2] === "appstore") appstore[day] = val;
+    else if (parts[2] === "direct") direct[day] = val;
+  }
+  const sort = (o) => Object.fromEntries(Object.entries(o).sort((a, b) => b[0].localeCompare(a[0])));
+  return json({ dailyActiveUsers: sort(total), byChannel: { appstore: sort(appstore), direct: sort(direct) } });
 }
 
 async function sha256hex(str) {

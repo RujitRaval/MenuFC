@@ -1,5 +1,7 @@
 # MenuFC ⚽
 
+[![.dmg downloads](https://img.shields.io/github/downloads/RujitRaval/MenuFC/total?label=.dmg%20downloads&color=2ea043)](https://github.com/RujitRaval/MenuFC/releases)
+
 A free macOS menu-bar app showing **live football scores**, one glance away. Distributed on the
 **Mac App Store** (free) and as a **direct notarized download**.
 
