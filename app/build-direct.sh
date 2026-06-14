@@ -10,6 +10,7 @@
 #       xcrun notarytool store-credentials "MenuFC" \
 #         --apple-id "you@example.com" --team-id "39PB68QUZJ" \
 #         --password "APP-SPECIFIC-PASSWORD"     # appleid.apple.com → Sign-In & Security → App-Specific Passwords
+#   • create-dmg (for the styled drag-to-Applications installer window):  brew install create-dmg
 #
 # Usage:
 #   ./build-direct.sh                 # uses TEAM_ID=39PB68QUZJ, NOTARY_PROFILE=MenuFC
@@ -55,13 +56,21 @@ xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
 echo "▶︎ Stapling the notarization ticket to the app…"
 xcrun stapler staple "$APP"
 
-echo "▶︎ Building the DMG…"
+echo "▶︎ Building the styled DMG (drag-to-Applications layout)…"
 rm -f "$DMG"
-STAGING="build/dmg-staging"
-rm -rf "$STAGING"; mkdir -p "$STAGING"
-cp -R "$APP" "$STAGING/"
-ln -s /Applications "$STAGING/Applications"
-hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+SRC="build/dmg-src"
+rm -rf "$SRC"; mkdir -p "$SRC"
+cp -R "$APP" "$SRC/"
+create-dmg \
+  --volname "$APP_NAME" \
+  --background "dmg-assets/installer-background.png" \
+  --window-pos 200 120 --window-size 600 400 \
+  --icon-size 120 \
+  --icon "${APP_NAME}.app" 150 195 \
+  --app-drop-link 450 195 \
+  --hide-extension "${APP_NAME}.app" \
+  --no-internet-enable \
+  "$DMG" "$SRC"
 
 echo
 echo "✅ Done → $DMG"
