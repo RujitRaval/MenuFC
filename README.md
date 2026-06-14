@@ -1,50 +1,47 @@
 # MenuFC ⚽
 
-A free macOS menu-bar app showing **live FIFA World Cup 2026 scores**, with an optional "Buy me a coffee" tip link.
+A free macOS menu-bar app showing **live football scores**, one glance away. Distributed on the
+**Mac App Store** (free) and as a **direct notarized download**.
 
 ## How it fits together
 
 ```
-┌──────────────────────┐        ┌──────────────────────────┐        ┌─────────────────────┐
-│  SwiftBar client      │  HTTPS │  Cloudflare Worker        │  HTTPS │  football-data.org   │
-│  menufc.30s.py        │ ─────▶ │  menufc-api  (+ KV cache) │ ─────▶ │  /v4/competitions/WC │
-│  (on each user's Mac) │ /scores│  holds API key as secret  │        │  (X-Auth-Token)      │
-└──────────────────────┘        └──────────────────────────┘        └─────────────────────┘
+┌───────────────────────────┐        ┌──────────────────────────┐        ┌──────────────────────────┐
+│  macOS menu-bar app        │  HTTPS │  Cloudflare Worker        │  HTTPS │  football-data.org        │
+│  (App Store + .dmg)        │ ─────▶ │  menufc-api  (+ KV cache) │ ─────▶ │  /v4/matches?competitions │
+│  app/  (Swift/AppKit)      │ /scores│  holds API key as secret  │        │  (X-Auth-Token)           │
+└───────────────────────────┘        └──────────────────────────┘        └──────────────────────────┘
 ```
 
-- The **client never calls football-data.org directly** — only the Worker's `/scores` endpoint.
+- The **app never calls football-data.org directly** — only the Worker's `/scores` endpoint.
 - The **Worker holds the football-data.org key as a secret** (`wrangler secret put`) and caches scores
   centrally, so one upstream fetch serves all users — keeping us under football-data.org's free-tier
-  rate limit no matter how many people install the client.
+  rate limit no matter how many people install the app.
 - `/scores` is **open to anyone** — no auth, login, or license gate.
-- The **client is safe to open-source**: it contains no secret, only the Worker URL.
+- The **app is safe to open-source**: it contains no secret, only the public Worker URL.
 
 ## Repo layout
 
-| Path        | What it is                                                        | Phase |
-|-------------|-------------------------------------------------------------------|-------|
-| `worker/`   | Cloudflare Worker (`menufc-api`) + KV cache. Key lives in a secret. | 2     |
-| `app/`      | **Native macOS menu-bar app (Swift/AppKit)** — the shippable client. | 5     |
-| `client/`   | SwiftBar plugin `menufc.30s.py` — superseded by `app/`, kept as reference. | 3     |
-| `docs/`     | "Setting up MenuFC" guide + one-page runbook.                     | 4     |
+| Path        | What it is                                                                       |
+|-------------|----------------------------------------------------------------------------------|
+| `app/`      | **Native macOS menu-bar app (Swift/AppKit)** — the shipping client. See [`app/README.md`](app/README.md). |
+| `worker/`   | Cloudflare Worker (`menufc-api`) + KV cache. API key lives in a secret.          |
+| `client/`   | Original SwiftBar plugin (`menufc.30s.py`) — **superseded by `app/`**, kept as reference. |
+| `docs/`     | Public website (landing page + privacy policy), served via GitHub Pages.         |
 
-> **The native app in [`app/`](app/) supersedes the SwiftBar plugin.** Same data and behavior,
-> built to ship on the Mac App Store. See [`app/README.md`](app/README.md) for build/run and the
-> Python→Swift parity checklist. The `worker/` backend is unchanged.
+## Get it
+
+- **Mac App Store** — free (submitted for review).
+- **Direct download** — a Developer-ID-signed, **notarized `.dmg`** via [GitHub Releases](https://github.com/RujitRaval/MenuFC/releases). The direct build also includes an optional **Buy me a coffee** link (the App Store build doesn't, per Apple's in-app-payment rules).
+- **Landing page:** https://rujitraval.github.io/MenuFC
 
 ## Security invariants (do not break)
 
-- The football-data.org API key appears **only** as a Cloudflare Worker secret — never in the client,
+- The football-data.org API key appears **only** as a Cloudflare Worker secret — never in the app,
   never in this repo. See [`.gitignore`](.gitignore).
-- The client ships with the public Worker URL baked in and nothing else sensitive.
-
-## Install (users)
-
-See **[docs/Setting-up-MenuFC.md](docs/Setting-up-MenuFC.md)** — no key or account needed.
-Operators: see the **[runbook](docs/RUNBOOK.md)**.
-
-Live Worker: `https://menufc-api.rujit.workers.dev` · Coffee: `https://buymeacoffee.com/rujitraval`
+- The app ships with the public Worker URL baked in and nothing else sensitive.
 
 ## Status
 
-✅ Worker deployed, client working. Built in phases (0 → 4). License: [MIT](LICENSE).
+✅ Worker deployed · native app built, notarized, and submitted to the Mac App Store · direct `.dmg`
+distribution ready. License: [MIT](LICENSE). Live Worker: `https://menufc-api.rujit.workers.dev`.
