@@ -10,7 +10,13 @@ struct ScoresClient {
     /// its idle cache to upstream (server-side rate-limited).
     func fetch(force: Bool) async throws -> ScoresPayload {
         var comps = URLComponents(url: scoresURL, resolvingAgainstBaseURL: false)!
-        if force { comps.queryItems = [URLQueryItem(name: "fresh", value: "1")] }
+        var items: [URLQueryItem] = []
+        if force { items.append(URLQueryItem(name: "fresh", value: "1")) }
+        #if DIRECT_BUILD
+        // Tag direct (.dmg) installs so the Worker's /stats can split them from App Store users.
+        items.append(URLQueryItem(name: "ch", value: "direct"))
+        #endif
+        if !items.isEmpty { comps.queryItems = items }
         var req = URLRequest(url: comps.url!)
         req.timeoutInterval = timeout
         req.cachePolicy = .reloadIgnoringLocalCacheData
