@@ -43,17 +43,12 @@ export default {
       return json({ ok: true, service: "menufc-api" });
     }
     if (url.pathname === "/scores") {
-      // Best-effort, privacy-preserving usage count — runs after responding, never blocks/breaks it.
-      ctx.waitUntil(recordHit(request, env).catch(() => {}));
       try {
         return await handleScores(env, url.searchParams.has("fresh"));
       } catch (err) {
         // Last-resort guard: never 500 the menu bar.
         return scoresResponse(emptyPayload(etDateString(new Date())), "error:" + (err && err.message));
       }
-    }
-    if (url.pathname === "/stats") {
-      return await handleStats(env, url.searchParams.get("key"));
     }
     return json({ error: "not_found" }, 404);
   },
@@ -90,7 +85,7 @@ async function handleScores(env, forced) {
     if (cache && cache.payload) return scoresResponse(cache.payload, "upstream-error-stale");
     return scoresResponse(emptyPayload(etDate, now), "upstream-error-empty");
   } finally {
-    await releaseLock(env);
+    releaseLock();
   }
 }
 
@@ -191,55 +186,14 @@ async function acquireLock(env) {
   await env.MENUFC_CACHE.put(LOCK_KEY, "1", { expirationTtl: 60 });
   return true;
 }
-async function releaseLock(env) {
-  try { await env.MENUFC_CACHE.delete(LOCK_KEY); } catch {}
-}
+// Intentionally a no-op: the lock auto-expires via its 60s KV TTL (see acquireLock). We skip
+// the explicit delete to avoid spending a KV delete op on every refresh — delete ops share a
+// small free-tier daily cap, and the next refresh can't run before the cache TTL anyway.
+function releaseLock() {}
 
-// ── usage analytics (privacy-preserving, server-side, no app changes) ────────
-// Counts distinct daily visitors WITHOUT storing personal data. We never store an IP — only
-// a per-day pseudonymous token = SHA-256(ip + day + secret salt), which cannot be reversed to
-// an IP and cannot be linked across days, plus a daily integer count. Runs in ctx.waitUntil,
-// so it never affects /scores latency or reliability. Set two secrets:
-//   wrangler secret put STATS_SALT   (any long random string — keeps tokens unguessable)
-//   wrangler secret put STATS_KEY    (the password for reading /stats)
-async function recordHit(request, env) {
-  const ip = request.headers.get("CF-Connecting-IP") || "";
-  if (!ip) return;
-  const day = etDateString(new Date());
-  const token = await sha256hex(ip + "|" + day + "|" + (env.STATS_SALT || "menufc"));
-  const seenKey = `u:${day}:${token}`;
-  if (await env.MENUFC_CACHE.get(seenKey)) return;                       // already counted today
-  await env.MENUFC_CACHE.put(seenKey, "1", { expirationTtl: 172800 });   // 2-day TTL, self-cleaning
-  // Channel split: the .dmg build sends ?ch=direct; everything else counts as App Store.
-  const ch = new URL(request.url).searchParams.get("ch") === "direct" ? "direct" : "appstore";
-  for (const key of [`dau:${day}`, `dau:${day}:${ch}`]) {
-    const cur = parseInt((await env.MENUFC_CACHE.get(key)) || "0", 10);
-    await env.MENUFC_CACHE.put(key, String(cur + 1), { expirationTtl: 60 * 60 * 24 * 120 });
-  }
-}
-
-// GET /stats?key=YOUR_STATS_KEY
-//   -> { dailyActiveUsers: {date:count}, byChannel: { appstore:{date:count}, direct:{date:count} } }
-async function handleStats(env, key) {
-  if (!env.STATS_KEY || key !== env.STATS_KEY) return json({ error: "forbidden" }, 403);
-  const list = await env.MENUFC_CACHE.list({ prefix: "dau:" });
-  const total = {}, appstore = {}, direct = {};
-  for (const k of list.keys) {
-    const parts = k.name.split(":");           // dau:DATE  or  dau:DATE:CHANNEL
-    const day = parts[1];
-    const val = Number(await env.MENUFC_CACHE.get(k.name));
-    if (parts.length === 2) total[day] = val;
-    else if (parts[2] === "appstore") appstore[day] = val;
-    else if (parts[2] === "direct") direct[day] = val;
-  }
-  const sort = (o) => Object.fromEntries(Object.entries(o).sort((a, b) => b[0].localeCompare(a[0])));
-  return json({ dailyActiveUsers: sort(total), byChannel: { appstore: sort(appstore), direct: sort(direct) } });
-}
-
-async function sha256hex(str) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+// Usage metrics: use Cloudflare's built-in Workers request analytics (dashboard / GraphQL) —
+// no per-request KV ops. The old KV-based /stats counter was removed because it cost ~3 KV
+// writes per unique daily visitor, which dominated the free-tier write budget.
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function etDateString(d) { return ET_FMT.format(d); }
