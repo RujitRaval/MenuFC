@@ -28,7 +28,6 @@ A free macOS menu-bar app showing **live football scores**, one glance away. Dis
 |-------------|----------------------------------------------------------------------------------|
 | `app/`      | **Native macOS menu-bar app (Swift/AppKit)** — the shipping client. See [`app/README.md`](app/README.md). |
 | `worker/`   | Cloudflare Worker (`menufc-api`) + KV cache. API key lives in a secret.          |
-| `client/`   | Original SwiftBar plugin (`menufc.30s.py`) — **superseded by `app/`**, kept as reference. |
 | `docs/`     | Public website (landing page + privacy policy), served via GitHub Pages.         |
 
 ## Get it
