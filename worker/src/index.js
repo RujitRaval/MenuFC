@@ -123,7 +123,12 @@ async function fetchAndShape(env, now, etDate) {
   const to = addDays(etDate, 2);
   const url = `${UPSTREAM}?competitions=${WC_COMPETITION_ID}&dateFrom=${from}&dateTo=${to}`;
   const res = await fetch(url, {
-    headers: { "X-Auth-Token": env.FOOTBALL_DATA_KEY, Accept: "application/json" },
+    headers: {
+      "X-Auth-Token": env.FOOTBALL_DATA_KEY,
+      // Opt into the live `minute` / `injuryTime` fields (football-data Livescore add-on).
+      "X-Api-Version": "v4.1",
+      Accept: "application/json",
+    },
   });
   if (!res.ok) throw new Error("upstream_" + res.status);
   const data = await res.json();
@@ -148,6 +153,8 @@ function shapeMatch(m) {
     state: mapState(m.status),
     matchday: m.matchday ?? null,
     group: m.group ?? null,
+    minute: m.minute ?? null,        // live elapsed minute (v4.1); null off-play
+    injuryTime: m.injuryTime ?? null, // added minutes, e.g. 45+2
     home: shapeTeam(m.homeTeam),
     away: shapeTeam(m.awayTeam),
     score: { home: ft.home ?? null, away: ft.away ?? null },

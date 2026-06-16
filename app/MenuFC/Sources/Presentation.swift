@@ -36,15 +36,26 @@ enum Presentation {
         return finished.last
     }
 
+    /// State label for display: a live match shows its minute ("67'", "45+2'") instead of the
+    /// word "LIVE"; everything else is the state code (HT, FT, …).
+    static func stateLabel(_ m: Match) -> String {
+        let st = m.displayState
+        if st == "LIVE", let minute = m.minute {
+            let inj = m.injuryTime ?? 0
+            return inj > 0 ? "\(minute)+\(inj)'" : "\(minute)'"
+        }
+        return st
+    }
+
     /// Menu-bar title text (mirror of title_text).
     static func titleText(_ m: Match?) -> String {
-        guard let m = m else { return "⚽ No WC matches today" }
+        guard let m = m else { return "⚽ No matches today" }
         let hf = m.home?.flag ?? "⚽"
         let af = m.away?.flag ?? "⚽"
         let st = m.displayState
         if (st == "LIVE" || st == "HT" || st == "FT"), m.hasScore,
            let h = m.score?.home, let a = m.score?.away {
-            return "\(hf) \(h)–\(a) \(af) \(st)"
+            return "\(hf) \(h)–\(a) \(af) \(stateLabel(m))"
         }
         if st == "SCHED" {
             return "\(hf) vs \(af) \(TimeUtil.timeString(m.utcDate))"

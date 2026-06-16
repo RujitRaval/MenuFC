@@ -21,6 +21,8 @@ struct Match: Codable {
     let state: String?
     let matchday: Int?
     let group: String?
+    let minute: Int?
+    let injuryTime: Int?
     let home: Team?
     let away: Team?
     let score: ScorePair?
