@@ -200,7 +200,7 @@ struct MatchRowView: View {
         let st = match.displayState
         if st == "SCHED" { return TimeUtil.timeString(match.utcDate) }
         if Presentation.finalStates.contains(st) && !match.hasScore { return "\(st) · N/A" }
-        return st
+        return Presentation.stateLabel(match) // LIVE → minute (e.g. "67'"), else the state
     }
 
     private var badgeColor: Color {
