@@ -32,7 +32,7 @@ A free macOS menu-bar app showing **live football scores**, one glance away. Dis
 
 ## Get it
 
-- **Mac App Store** — free (submitted for review).
+- **Mac App Store** — free: https://apps.apple.com/app/menufc-live-football-scores/id6779734499
 - **Direct download** — a Developer-ID-signed, **notarized `.dmg`** via [GitHub Releases](https://github.com/RujitRaval/MenuFC/releases). The direct build also includes an optional **Buy me a coffee** link (the App Store build doesn't, per Apple's in-app-payment rules).
 - **Landing page:** https://rujitraval.github.io/MenuFC
 
